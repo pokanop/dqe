@@ -32,7 +32,7 @@ From Xcode, go to the menu item File -> Swift Packages and select Add Package De
 Update your `Podfile` and run `pod install`:
 
 ```sh
-pod 'Boing'
+pod 'DQExtensions'
 ```
 
 ### Carthage
