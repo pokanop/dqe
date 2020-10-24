@@ -165,13 +165,6 @@ public extension DispatchQueue {
 // MARK: - Global Properties & Methods
 
 ///
-/// Bootstrap the `DispatchQueue` extensions using this method somewhere early in the lifecycle.
-///
-public func initialize() {
-    DispatchQueue.Context.allCases.forEach { $0.associatedQueue?.set(context: $0) }
-}
-
-///
 /// Checks if the main queue is currently executing.
 ///
 public var isMainQueue: Bool { queueName != nil && queueName == DispatchQueue.main.name }
@@ -191,3 +184,10 @@ public var queueName: String? { DispatchQueue.name }
 /// cannot be fetched using this mechanism and will return `nil` if executing.
 ///
 public var currentQueue: DispatchQueue? { DispatchQueue.context?.associatedQueue }
+
+///
+/// Bootstrap the `DispatchQueue` extensions using this method somewhere early in the lifecycle.
+///
+public func initialize() {
+    DispatchQueue.Context.allCases.forEach { $0.associatedQueue?.set(context: $0) }
+}
