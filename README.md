@@ -1,4 +1,8 @@
-![DQExtensions](Resources/DQExtensions.png)
+# [![DQExtensions](https://github.com/pokanop/dqe/blob/main/Resources/DQExtensions.png?raw=true)](#)
+
+[![Version](https://img.shields.io/cocoapods/v/DQExtensions.svg?style=flat)](http://cocoapods.org/pods/DQExtensions)
+[![Platform](https://img.shields.io/cocoapods/p/DQExtensions.svg?style=flat)](http://cocoapods.org/pods/DQExtensions)
+[![License](https://img.shields.io/cocoapods/l/DQExtensions.svg?style=flat)](https://github.com/pokanop/dqe/blob/master/LICENSE)
 
 # DQExtensions
 
@@ -21,6 +25,14 @@ Apple provides powerful functionality to boot, but there's some things that this
 The project supports SPM and can be added to projects targeting Swift 5.3 and higher.
 
 From Xcode, go to the menu item File -> Swift Packages and select Add Package Dependency. Paste in this github location into the text field and proceed to add the target into your project.
+
+### Cocoapods
+
+Update your `Podfile` and run `pod install`:
+
+```sh
+pod 'Boing'
+```
 
 ### Carthage
 
