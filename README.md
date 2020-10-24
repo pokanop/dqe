@@ -2,8 +2,6 @@
 
 # DQExtensions
 
-`DispatchQueue` Extensions: The Missing Parts
-
 ## Features
 
 This library adds several useful extensions and conveniences for managing `DispatchQueue` types in Grand Central Dispatch.
