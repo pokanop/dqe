@@ -1,0 +1,10 @@
+os:
+  - osx
+language: swift
+osx_image: xcode11
+env:
+  - PROJECT_NAME=DQExtensions
+install: (swift package update)
+script:
+  - (swift build)
+  - (swift test)

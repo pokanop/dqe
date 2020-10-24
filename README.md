@@ -1,5 +1,6 @@
 # [![DQExtensions](https://github.com/pokanop/dqe/blob/main/Resources/DQExtensions.png?raw=true)](#)
 
+[![Build Status](https://travis-ci.org/pokanop/dqe.svg?branch=main)](https://travis-ci.org/pokanop/dqe)
 [![Version](https://img.shields.io/cocoapods/v/DQExtensions.svg?style=flat)](http://cocoapods.org/pods/DQExtensions)
 [![Platform](https://img.shields.io/cocoapods/p/DQExtensions.svg?style=flat)](http://cocoapods.org/pods/DQExtensions)
 [![License](https://img.shields.io/cocoapods/l/DQExtensions.svg?style=flat)](https://github.com/pokanop/dqe/blob/master/LICENSE)
