@@ -72,7 +72,7 @@ public extension DispatchQueue {
     ///
     /// Returns true if this queue is the currently executing queue.
     ///
-    var isCurrent: Bool { name == queueName }
+    var isCurrent: Bool { name != nil && name == queueName }
     
     ///
     /// Returns the global dispatch queue with a quality of service of `.background`.
@@ -155,7 +155,7 @@ public extension DispatchQueue {
     ///
     /// - Parameter work: The closure to execute.
     ///
-    func sync(_ work: () -> ()) {
+    func syncSafe(_ work: () -> ()) {
         guard !isCurrent else { work(); return }
         sync(execute: work)
     }
@@ -174,7 +174,7 @@ public func initialize() {
 ///
 /// Checks if the main queue is currently executing.
 ///
-public var isMainQueue: Bool { queueName == DispatchQueue.main.name }
+public var isMainQueue: Bool { queueName != nil && queueName == DispatchQueue.main.name }
 
 ///
 /// Get the currently executing queue's name.

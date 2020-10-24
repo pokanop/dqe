@@ -1,5 +1,7 @@
 # DQExtensions
-DispatchQueue Extensions: The Missing Parts
+`DispatchQueue` Extensions: The Missing Parts
+
+## Features
 
 This library adds several useful extensions and conveniences for managing `DispatchQueue` types in Grand Central Dispatch.
 
@@ -13,3 +15,5 @@ Apple provides powerful functionality to boot, but there's some things that this
 ## Swift Package Manager
 
 The project supports SPM and can be added to projects targeting Swift 5.3 and higher.
+
+## API
