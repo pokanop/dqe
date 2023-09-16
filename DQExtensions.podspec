@@ -16,7 +16,7 @@ Pod::Spec.new do |spec|
   #
 
   spec.name         = "DQExtensions"
-  spec.version      = "0.1.1"
+  spec.version      = "0.2.0"
   spec.summary      = "DispatchQueue Extensions, The Missing Parts."
 
   # This description is used to generate tags and improve search results.
@@ -79,7 +79,7 @@ Pod::Spec.new do |spec|
   #  Supports git, hg, bzr, svn and HTTP.
   #
 
-  spec.source       = { :git => "https://github.com/pokanop/dqe", :tag => "#{spec.version}" }
+  spec.source       = { :git => "https://github.com/pokanop/dqe.git", :tag => "#{spec.version}" }
 
 
   # ――― Source Code ―――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――― #

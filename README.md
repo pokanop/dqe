@@ -67,7 +67,7 @@ print("running on queue: \(queueName)")
 
 To access the currently running queue _if possible_ use the `currentQueue` global property:
 
-```
+```swift
 guard let currentQueue = currentQueue else { return }
 
 currentQueue.async {
@@ -138,7 +138,7 @@ var name: String?
 var isCurrent: Bool
 ```
 
-Dispatching sync on a queue can be disastrous normally if calling from the same queue. The intention of executing in a blocking fashion will deadlock if already on the same queue. DQExtensions provides a `syncSafe(work:)` method that will short circuit this dangerous behavior by running the closure inline, as intended.
+Dispatching sync on a queue can be disastrous normally if calling from the same queue. The intention of executing in a blocking fashion will deadlock if already on the same queue. DQExtensions provides a `safeSync(work:)` method that will short circuit this dangerous behavior by running the closure inline, as intended.
 
 ```swift
 ///
@@ -149,7 +149,7 @@ Dispatching sync on a queue can be disastrous normally if calling from the same 
 ///
 /// - Parameter work: The closure to execute.
 ///
-func syncSafe(_ work: () -> ())
+func safeSync(_ work: () -> ())
 ```
 
 ## Contibuting

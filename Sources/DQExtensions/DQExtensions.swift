@@ -3,12 +3,13 @@ import Foundation
 // MARK: - Dispatch Queue Extensions
 
 ///
-/// DQExtentions provides facilities to identify queues reliably and convenience methods to
+/// DQExtensions provides facilities to identify queues reliably and convenience methods to
 /// provide for more powerful interactions with Grand Central Dispatch's core API.
 ///
 public extension DispatchQueue {
     
-    fileprivate enum Context: CaseIterable {
+    fileprivate enum Kind: CaseIterable {
+        
         case main
         case background
         case utility
@@ -17,7 +18,7 @@ public extension DispatchQueue {
         case userInteractive
         case custom(String)
         
-        static var allCases: [Context] {
+        static var allCases: [Kind] {
             [.main, .background, .utility, .default, .userInitiated, .userInteractive]
         }
         
@@ -33,19 +34,19 @@ public extension DispatchQueue {
             }
         }
         
-        var associatedQueue: DispatchQueue? {
+        var queue: DispatchQueue? {
             switch self {
-            case .main: return DispatchQueue.main
-            case .background: return DispatchQueue.background()
-            case .utility: return DispatchQueue.utility()
-            case .default: return DispatchQueue.default()
-            case .userInitiated: return DispatchQueue.userInitiated()
-            case .userInteractive: return DispatchQueue.userInteractive()
+            case .main: return .main
+            case .background: return .background()
+            case .utility: return .utility()
+            case .default: return .default()
+            case .userInitiated: return .userInitiated()
+            case .userInteractive: return .userInteractive()
             case .custom: return nil
             }
         }
         
-        static func from(name: String) -> Context {
+        static func from(name: String) -> Kind {
             switch name {
             case "main": return .main
             case "background": return .background
@@ -56,11 +57,29 @@ public extension DispatchQueue {
             default: return .custom(name)
             }
         }
+        
+    }
+    
+    fileprivate struct Context {
+        
+        var kind: Kind
+        var debounce: [AnyHashable: DispatchWorkItem] = [:]
+        var throttle: Set<AnyHashable> = Set()
+        
+        var name: String? { kind.name }
+        var queue: DispatchQueue? { kind.queue }
+        
+        init(kind: Kind) {
+            self.kind = kind
+        }
+        
     }
     
     fileprivate static let contextKey = DispatchSpecificKey<Context>()
     
     fileprivate static var context: Context? { getSpecific(key: DispatchQueue.contextKey) }
+    
+    fileprivate var context: Context? { getSpecific(key: DispatchQueue.contextKey) }
     
     fileprivate static var name: String? { context?.name }
     
@@ -140,7 +159,13 @@ public extension DispatchQueue {
     /// - Parameter name: The name of the queue to set.
     ///
     func set(name: String) {
-        set(context: Context.from(name: name))
+        let kind: Kind = .from(name: name)
+        if var context = self.context {
+            context.kind = kind
+            set(context: context)
+        } else {
+            set(context: Context(kind: kind))
+        }
     }
     
     fileprivate func set(context: Context) {
@@ -155,9 +180,104 @@ public extension DispatchQueue {
     ///
     /// - Parameter work: The closure to execute.
     ///
-    func syncSafe(_ work: () -> ()) {
+    func safeSync(_ work: () -> ()) {
         guard !isCurrent else { work(); return }
+        dispatchPrecondition(condition: .notOnQueue(self))
         sync(execute: work)
+    }
+    
+    ///
+    /// Submits a `DispatchWorkItem` for synchronous execution on this queue safely.
+    ///
+    /// If the queue is already executing, the `workItem` is performed inline without dispatching
+    /// synchronously which would otherwise lead to a deadlock.
+    ///
+    /// - Parameter workItem: The `DispatchWorkItem` to execute.
+    ///
+    func safeSync(execute workItem: DispatchWorkItem) {
+        guard !isCurrent else { workItem.perform(); return }
+        dispatchPrecondition(condition: .notOnQueue(self))
+        sync(execute: workItem)
+    }
+    
+    ///
+    /// Debounce execution of work based on a deadline for the given identifier.
+    ///
+    /// Executes the work **later** by debouncing calls until deadline is exceeded. Keyed
+    /// by identifier for associating unique work items to be debounced.
+    ///
+    /// - Parameters:
+    ///   - interval: Time to wait before execution.
+    ///   - identifier: A unique hashable identifier.
+    ///   - work: The work item to execute after deadline.
+    ///
+    func debounce(for interval: TimeInterval,
+                  identifier: AnyHashable,
+                  execute work: @escaping () -> ()) {
+        guard var context = self.context else { assertionFailure(); return }
+        
+        // Cancel previous work and update context
+        if let workItem = context.debounce[identifier] {
+            workItem.cancel()
+            context.debounce[identifier] = nil
+        }
+        
+        // Create self removing work item
+        let workItem = DispatchWorkItem { [weak self] in
+            work()
+            context.debounce[identifier] = nil
+            self?.set(context: context)
+        }
+        
+        // Insert work item into context
+        context.debounce[identifier] = workItem
+        set(context: context)
+        
+        // Queue the work item after interval
+        asyncAfter(deadline: .now() + interval, execute: workItem)
+    }
+    
+    ///
+    /// Throttle execution of work based on an interval for the given identifier.
+    ///
+    /// Executes the work **immediately** and throttles calls until deadline is exceeded. Keyed
+    /// by identifier for associating unique work items to be throttled.
+    ///
+    /// - Parameters:
+    ///   - interval: Time to wait after execution.
+    ///   - identifier: A unique hashable identifier.
+    ///   - async: Whether to execute work asynchronously or not.
+    ///   - work: The work item to execute before deadline.
+    ///
+    func throttle(for interval: TimeInterval,
+                  identifier: AnyHashable,
+                  async: Bool = true,
+                  execute work: @escaping () -> ()) {
+        // Create the work item that will update deadline
+        let workItem = DispatchWorkItem { [weak self] in
+            // Execute the work
+            work()
+            
+            // Remove from context after deadline
+            self?.asyncAfter(deadline: .now() + interval) { [weak self] in
+                guard var context = self?.context else { return }
+                
+                context.throttle.remove(identifier)
+                self?.set(context: context)
+            }
+        }
+        
+        // Deadline not exceeded so return
+        guard context?.throttle.contains(identifier) == false else { return }
+        
+        guard var context = self.context else { return }
+        
+        // No throttle time so execute immediately and update deadline
+        context.throttle.insert(identifier)
+        set(context: context)
+        
+        // Execute the work
+        async ? self.async(execute: workItem) : self.safeSync(execute: workItem)
     }
     
 }
@@ -183,11 +303,13 @@ public var queueName: String? { DispatchQueue.name }
 /// This relies on standard GCD queues which can be associated with names. Custom queues
 /// cannot be fetched using this mechanism and will return `nil` if executing.
 ///
-public var currentQueue: DispatchQueue? { DispatchQueue.context?.associatedQueue }
+public var currentQueue: DispatchQueue? { DispatchQueue.context?.queue }
 
 ///
 /// Bootstrap the `DispatchQueue` extensions using this method somewhere early in the lifecycle.
 ///
 public func initialize() {
-    DispatchQueue.Context.allCases.forEach { $0.associatedQueue?.set(context: $0) }
+    
+    DispatchQueue.Kind.allCases.forEach { $0.queue?.set(name: $0.name) }
+    
 }
